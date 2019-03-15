@@ -99,27 +99,16 @@ const init = () => {
       lifespan: Math.random() * 4500 + 500
     })
   })
-
-  window.requestAnimationFrame(step)
 }
 
-const TICK_LENGTH = 300 // ms
+const TICK_LENGTH = 250 // ms
 
 let begin = Date.now()
-
 let checkedBoxesInPreviousFrame: { [row: number]: { [column: number]: true }} = {}
 
-let lastTimestamp = -1
-const step = (timestamp) => {
-  if (lastTimestamp !== -1) {
-    if (timestamp - lastTimestamp < TICK_LENGTH) {
-      window.requestAnimationFrame(step)
-      return
-    }
-  } else {
-    lastTimestamp = timestamp
-  }
+init()
 
+setInterval(() => {
   const checkedBoxesInThisFrame: { [row: number]: { [column: number]: true }} = {}
 
   for (let i = 0; i < clickedCheckboxes.length;) {
@@ -175,8 +164,4 @@ const step = (timestamp) => {
   }
 
   checkedBoxesInPreviousFrame = checkedBoxesInThisFrame
-
-  window.requestAnimationFrame(step)
-}
-
-init()
+}, TICK_LENGTH)
