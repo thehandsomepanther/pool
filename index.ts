@@ -1,32 +1,80 @@
-interface Coordinate {
-  row: number
-  column: number
+interface Point {
+  x: number
+  y: number
 }
 
-interface ClickedCheckbox extends Coordinate {
+const bresenhamCircle = (origin: Point, radius: number): Point[] => {
+  const points: Point[] = []
+
+  let x = 0
+  let y = radius
+  let d = 3 - (2 * radius)
+
+  points.push(
+    {x: origin.x + x, y: origin.y + y},
+    {x: origin.x + x, y: origin.y - y},
+    {x: origin.x - x, y: origin.y - y},
+    {x: origin.x - x, y: origin.y + y},
+    {x: origin.x + y, y: origin.y + x},
+    {x: origin.x + y, y: origin.y - x},
+    {x: origin.x - y, y: origin.y - x},
+    {x: origin.x - y, y: origin.y + x},
+  )
+
+  while (y >= x) {
+    x++
+
+    if (d > 0) {
+      y--
+      d = d + 4 * (x - y) + 10
+    } else {
+      d = d + 4 * x + 6
+    }
+
+    points.push(
+      {x: origin.x + x, y: origin.y + y},
+      {x: origin.x + x, y: origin.y - y},
+      {x: origin.x - x, y: origin.y - y},
+      {x: origin.x - x, y: origin.y + y},
+      {x: origin.x + y, y: origin.y + x},
+      {x: origin.x + y, y: origin.y - x},
+      {x: origin.x - y, y: origin.y - x},
+      {x: origin.x - y, y: origin.y + x},
+    )
+  }
+
+  return points
+}
+
+interface ClickedCheckbox {
   timestamp: number
+  origin: Point
+  lifespan: number
 }
 
 const clickedCheckboxes: ClickedCheckbox[] = []
 
 const CHECKBOX_SIZE = 12
 
-const numRows = Math.floor(window.innerHeight / CHECKBOX_SIZE)
-const numCols = Math.floor(window.innerWidth / CHECKBOX_SIZE)
+const container = document.querySelector('.container')
+const containerRect = container.getBoundingClientRect()
+
+const numRows = Math.floor(containerRect.height / CHECKBOX_SIZE)
+const numCols = Math.floor(containerRect.width / CHECKBOX_SIZE)
 
 const checkboxes: Array<Array<HTMLInputElement>> = []
 
 const init = () => {
   const containerEl = document.querySelector('.container')
 
-  for (let y = 0; y < numRows; y++) {
+  for (let row = 0; row < numRows; row++) {
     const rowEl = document.createElement('div')
     const className = document.createAttribute('class')
     className.value = 'row'
     rowEl.setAttributeNode(className)
     const rowCheckboxes: Array<HTMLInputElement> = []
 
-    for (let x = 0; x < numCols; x++) {
+    for (let col = 0; col < numCols; col++) {
       const checkboxEl = document.createElement('input')
 
       const inputType = document.createAttribute('type')
@@ -42,81 +90,72 @@ const init = () => {
   }
 
   containerEl.addEventListener("click", (e: MouseEvent) => {
-    const row = Math.floor(e.clientY / CHECKBOX_SIZE)
-    const column = Math.floor(e.clientX / CHECKBOX_SIZE)
-
     clickedCheckboxes.push({
-      row,
-      column,
+      origin: {
+        y: Math.floor((e.clientY - containerRect.top) / CHECKBOX_SIZE),
+        x: Math.floor((e.clientX - containerRect.left) / CHECKBOX_SIZE),
+      },
       timestamp: Date.now(),
+      lifespan: Math.random() * 4500 + 500
     })
   })
 
   window.requestAnimationFrame(step)
 }
 
-const WAVE_LIFESPAN = 2000 // ms
-const TICK_LENGTH = 100 // ms
+const TICK_LENGTH = 300 // ms
 
 let begin = Date.now()
 
 let checkedBoxesInPreviousFrame: { [row: number]: { [column: number]: true }} = {}
-const step = () => {
+
+let lastTimestamp = -1
+const step = (timestamp) => {
+  if (lastTimestamp !== -1) {
+    if (timestamp - lastTimestamp < TICK_LENGTH) {
+      window.requestAnimationFrame(step)
+      return
+    }
+  } else {
+    lastTimestamp = timestamp
+  }
+
   const checkedBoxesInThisFrame: { [row: number]: { [column: number]: true }} = {}
 
   for (let i = 0; i < clickedCheckboxes.length;) {
     const checkbox = clickedCheckboxes[i]
     const age = Date.now() - checkbox.timestamp
-    if (age > WAVE_LIFESPAN) {
+    if (age > checkbox.lifespan) {
       clickedCheckboxes.splice(i, 1)
       continue
     }
 
-    const ticksSinceBirth = Math.floor(age / TICK_LENGTH)
-
-    const coordinates: Coordinate[] = []
-    const left = checkbox.column - ticksSinceBirth
-    const right = checkbox.column + ticksSinceBirth
-    const top = checkbox.row - ticksSinceBirth
-    const bottom = checkbox.row + ticksSinceBirth
-
-    if (left >= 0) {
-      coordinates.push({
-        row: checkbox.row,
-        column: left,
-      })
+    const radius = Math.floor(age / TICK_LENGTH)
+    let points: Point[] = []
+    if (radius > 0) {
+      points = bresenhamCircle(checkbox.origin, radius)
+    } else {
+      if (!checkedBoxesInThisFrame[checkbox.origin.y]) {
+        checkedBoxesInThisFrame[checkbox.origin.y] = {}
+      }
+      checkedBoxesInThisFrame[checkbox.origin.y][checkbox.origin.x] = true
     }
 
-    if (right < numCols) {
-      coordinates.push({
-        row: checkbox.row,
-        column: right,
-      })
-    }
-
-    if (top >= 0) {
-      coordinates.push({
-        row: top,
-        column: checkbox.column,
-      })
-    }
-
-    if (bottom < numRows) {
-      coordinates.push({
-        row: bottom,
-        column: checkbox.column,
-      })
-    }
-
-    for (const coordinate of coordinates) {
-      if (!checkedBoxesInThisFrame[coordinate.row]) {
-        checkedBoxesInThisFrame[coordinate.row] = {}
+    for (const p of points) {
+      if (p.y < 0 || p.y >= numRows || p.x < 0 || p.x >= numCols) {
+        continue
       }
 
-      checkedBoxesInThisFrame[coordinate.row][coordinate.column] = true
+      if (!checkedBoxesInThisFrame[p.y]) {
+        checkedBoxesInThisFrame[p.y] = {}
+      }
 
-      const checkbox = checkboxes[coordinate.row][coordinate.column]
-      checkbox.checked = true
+      checkedBoxesInThisFrame[p.y][p.x] = true
+
+      const checkbox = checkboxes[p.y][p.x]
+      if (checkbox) {
+        checkbox.checked = true
+      }
     }
 
     i++
@@ -129,7 +168,9 @@ const step = () => {
       }
 
       const checkbox = checkboxes[row][column]
-      checkbox.checked = false
+      if (checkbox) {
+        checkbox.checked = false
+      }
     }
   }
 
