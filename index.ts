@@ -54,7 +54,7 @@ interface ClickedCheckbox {
 
 const clickedCheckboxes: ClickedCheckbox[] = []
 
-const CHECKBOX_SIZE = 12
+const CHECKBOX_SIZE = 14
 
 let container = document.querySelector('.container')
 let containerRect = container.getBoundingClientRect()
@@ -92,8 +92,8 @@ const init = () => {
   containerEl.addEventListener("click", (e: MouseEvent) => {
     clickedCheckboxes.push({
       origin: {
-        y: Math.floor((e.clientY - containerRect.top) / CHECKBOX_SIZE),
         x: Math.floor((e.clientX - containerRect.left) / CHECKBOX_SIZE),
+        y: Math.floor((e.clientY - containerRect.top) / CHECKBOX_SIZE),
       },
       timestamp: Date.now(),
       lifespan: Math.random() * 4500 + 500

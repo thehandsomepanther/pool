@@ -18,7 +18,7 @@ var bresenhamCircle = function (origin, radius) {
     return points;
 };
 var clickedCheckboxes = [];
-var CHECKBOX_SIZE = 12;
+var CHECKBOX_SIZE = 14;
 var container = document.querySelector('.container');
 var containerRect = container.getBoundingClientRect();
 var numRows = Math.floor(containerRect.height / CHECKBOX_SIZE);
@@ -46,8 +46,8 @@ var init = function () {
     containerEl.addEventListener("click", function (e) {
         clickedCheckboxes.push({
             origin: {
-                y: Math.floor((e.clientY - containerRect.top) / CHECKBOX_SIZE),
-                x: Math.floor((e.clientX - containerRect.left) / CHECKBOX_SIZE)
+                x: Math.floor((e.clientX - containerRect.left) / CHECKBOX_SIZE),
+                y: Math.floor((e.clientY - containerRect.top) / CHECKBOX_SIZE)
             },
             timestamp: Date.now(),
             lifespan: Math.random() * 4500 + 500
