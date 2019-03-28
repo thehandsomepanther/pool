@@ -53,6 +53,10 @@ var init = function () {
             lifespan: Math.random() * 4500 + 500
         });
     });
+    window.addEventListener('resize', function () {
+        container = document.querySelector('.container');
+        containerRect = container.getBoundingClientRect();
+    });
 };
 var TICK_LENGTH = 250; // ms
 var begin = Date.now();

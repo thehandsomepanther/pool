@@ -56,8 +56,8 @@ const clickedCheckboxes: ClickedCheckbox[] = []
 
 const CHECKBOX_SIZE = 12
 
-const container = document.querySelector('.container')
-const containerRect = container.getBoundingClientRect()
+let container = document.querySelector('.container')
+let containerRect = container.getBoundingClientRect()
 
 const numRows = Math.floor(containerRect.height / CHECKBOX_SIZE)
 const numCols = Math.floor(containerRect.width / CHECKBOX_SIZE)
@@ -98,6 +98,11 @@ const init = () => {
       timestamp: Date.now(),
       lifespan: Math.random() * 4500 + 500
     })
+  })
+
+  window.addEventListener('resize', () => {
+    container = document.querySelector('.container')
+    containerRect = container.getBoundingClientRect()
   })
 }
 
